@@ -151,6 +151,14 @@
         .hh-ext-company-badge--it      { color: #1e40af; background: #dbeafe; }
 
         .hh-ext-spacer { flex: 1; }
+
+        /* Card background markers */
+        .hh-ext-card--fresh {
+            background: #f0fdfa !important;
+        }
+        .hh-ext-card--fraud {
+            background: #fff7ed !important;
+        }
     `);
 
     /* ====================== DATA EXTRACTION ====================== */
@@ -301,8 +309,8 @@
         // Визуальные маркеры карточки
         const isFresh = creDate && new Date(creDate).toDateString() === new Date().toDateString();
         const isFraud = pubInfo.isSuspicious;
-        if (isFresh) card.style.background = "#f0fdfa";      // пастельный зелёный
-        if (isFraud) card.style.background = "#fff7ed";       // пастельный оранжевый
+        if (isFresh) card.classList.add("hh-ext-card--fresh");
+        if (isFraud) card.classList.add("hh-ext-card--fraud");
 
         const wrap = document.createElement("div");
         wrap.className = "hh-ext-wrap";
