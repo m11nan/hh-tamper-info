@@ -324,6 +324,9 @@
         // Визуальные маркеры карточки
         const isFresh = creDate && new Date(creDate).toDateString() === new Date().toDateString();
         const isFraud = pubInfo.isSuspicious;
+        if (isFresh || isFraud) {
+            console.log("[HH-EXT] marker check:", { vacancyId: data.vacancyId, creDate, isFresh, isFraud, pubInfo });
+        }
         if (isFresh) card.classList.add("hh-ext-card--fresh");
         if (isFraud) card.classList.add("hh-ext-card--fraud");
 
