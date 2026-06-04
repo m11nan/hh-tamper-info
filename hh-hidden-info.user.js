@@ -479,7 +479,7 @@
         const map = new Map(vacancies.map((v) => [String(v.vacancyId), v]));
         const cards = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"], [data-qa="serp-item"]');
 
-        if (from)
+        if (from) {
             console.log(
                 "[HH-EXT] processPage(" +
                     from +
@@ -488,6 +488,7 @@
                     ", вакансий в JSON=" +
                     vacancies.length,
             );
+        }
 
         let processed = 0;
         for (const card of cards) {
