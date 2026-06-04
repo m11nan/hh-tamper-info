@@ -219,11 +219,16 @@
                 inStr = !inStr;
                 continue;
             }
-            if (inStr) continue;
-            if (ch === "{") depth++;
-            else if (ch === "}") {
+            if (inStr) {
+                continue;
+            }
+            if (ch === "{") {
+                depth++;
+            } else if (ch === "}") {
                 depth--;
-                if (depth === 0) return i;
+                if (depth === 0) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -235,9 +240,13 @@
             const html = await resp.text();
             const marker = '{"redirectConfig"';
             const idx = html.indexOf(marker);
-            if (idx === -1) return null;
+            if (idx === -1) {
+                return null;
+            }
             const end = findMatchingBrace(html, idx);
-            if (end === -1) return null;
+            if (end === -1) {
+                return null;
+            }
             return JSON.parse(html.slice(idx, end + 1));
         } catch (e) {
             console.log("[HH-EXT] fetch error:", e);
@@ -250,10 +259,15 @@
     function getPubInfo(data) {
         const hh = data.vacancyProperties?.calculatedStates?.HH || {};
         let type = "HH_STANDARD";
-        if (hh.premium) type = "HH_PREMIUM";
-        else if (hh.optimum) type = "HH_VP_OPTIMUM";
-        else if (hh.standardPlus) type = "HH_STANDARD_PLUS";
-        else if (hh.free) type = "HH_FREE";
+        if (hh.premium) {
+            type = "HH_PREMIUM";
+        } else if (hh.optimum) {
+            type = "HH_VP_OPTIMUM";
+        } else if (hh.standardPlus) {
+            type = "HH_STANDARD_PLUS";
+        } else if (hh.free) {
+            type = "HH_FREE";
+        }
         return {
             type,
             translation: hh.translation || PUBLICATION_TYPES[type].label,
@@ -263,12 +277,16 @@
     }
 
     function getGPH(contracts) {
-        if (!contracts?.[0]?.civilLawContractsElement) return [];
+        if (!contracts?.[0]?.civilLawContractsElement) {
+            return [];
+        }
         return contracts[0].civilLawContractsElement.map((c) => GPH_LABELS[c] || c);
     }
 
     function fmtDate(iso) {
-        if (!iso) return "";
+        if (!iso) {
+            return "";
+        }
         const d = new Date(iso);
         const now = new Date();
         const isToday = d.toDateString() === now.toDateString();
@@ -280,7 +298,9 @@
     }
 
     function fmtTime(iso) {
-        if (!iso) return "";
+        if (!iso) {
+            return "";
+        }
         return new Date(iso).toLocaleString("ru-RU", {
             day: "numeric",
             month: "long",
@@ -310,7 +330,9 @@
     /* ====================== INJECTION ====================== */
 
     function injectInfo(card, data) {
-        if (card.querySelector(".hh-ext-wrap")) return;
+        if (card.querySelector(".hh-ext-wrap")) {
+            return;
+        }
         const company = data.company || {};
         const comp = data.compensation || {};
         const resp = data.autoResponse || {};
@@ -325,8 +347,12 @@
         const isFresh = creDate && Date.now() - new Date(creDate).getTime() < 24 * 60 * 60 * 1000;
         const isFraud = pubInfo.isSuspicious;
         console.log("[HH-EXT] marker check", data.vacancyId, { creDate, isFresh, isFraud });
-        if (isFresh) card.classList.add("hh-ext-card--fresh");
-        if (isFraud) card.classList.add("hh-ext-card--fraud");
+        if (isFresh) {
+            card.classList.add("hh-ext-card--fresh");
+        }
+        if (isFraud) {
+            card.classList.add("hh-ext-card--fraud");
+        }
 
         const wrap = document.createElement("div");
         wrap.className = "hh-ext-wrap";
@@ -356,8 +382,12 @@
 
         if (data.responsesCount != null || data.totalResponsesCount != null) {
             const parts = [];
-            if (data.responsesCount != null) parts.push(`+${data.responsesCount} новых`);
-            if (data.totalResponsesCount != null) parts.push(`всего ${data.totalResponsesCount}`);
+            if (data.responsesCount != null) {
+                parts.push(`+${data.responsesCount} новых`);
+            }
+            if (data.totalResponsesCount != null) {
+                parts.push(`всего ${data.totalResponsesCount}`);
+            }
             r1.insertAdjacentHTML(
                 "beforeend",
                 `<span class="hh-ext-responses">📊 Отклики: <strong>${parts.join(" / ")}</strong></span>`,
@@ -466,13 +496,17 @@
     function processPage(from) {
         const pageData = freshDataCache || extractPageData();
         if (!pageData) {
-            if (from) console.log("[HH-EXT] processPage(" + from + "): extract вернул null");
+            if (from) {
+                console.log("[HH-EXT] processPage(" + from + "): extract вернул null");
+            }
             return;
         }
 
         const vacancies = pageData.vacancySearchResult?.vacancies;
         if (!vacancies?.length) {
-            if (from) console.log("[HH-EXT] processPage(" + from + "): нет вакансий в данных");
+            if (from) {
+                console.log("[HH-EXT] processPage(" + from + "): нет вакансий в данных");
+            }
             return;
         }
 
@@ -492,23 +526,31 @@
 
         let processed = 0;
         for (const card of cards) {
-            if (card.classList.contains("hh-ext-done")) continue;
+            if (card.classList.contains("hh-ext-done")) {
+                continue;
+            }
 
             const link = card.querySelector('[data-qa="serp-item__title"], [data-qa="vacancy-serp__vacancy-title"]');
             if (!link) {
-                if (from) console.log("[HH-EXT]  нет ссылки в карточке");
+                if (from) {
+                    console.log("[HH-EXT]  нет ссылки в карточке");
+                }
                 continue;
             }
 
             const m = (link.href || "").match(/vacancy\/(\d+)/);
             if (!m) {
-                if (from) console.log("[HH-EXT]  нет ID в href:", link.href);
+                if (from) {
+                    console.log("[HH-EXT]  нет ID в href:", link.href);
+                }
                 continue;
             }
 
             const data = map.get(m[1]);
             if (!data) {
-                if (from) console.log("[HH-EXT]  ID " + m[1] + " не найден в JSON");
+                if (from) {
+                    console.log("[HH-EXT]  ID " + m[1] + " не найден в JSON");
+                }
                 continue;
             }
 
@@ -517,9 +559,13 @@
             processed++;
         }
 
-        if (from) console.log("[HH-EXT] processPage(" + from + "): обработано=" + processed);
+        if (from) {
+            console.log("[HH-EXT] processPage(" + from + "): обработано=" + processed);
+        }
 
-        if (retryTimer) clearTimeout(retryTimer);
+        if (retryTimer) {
+            clearTimeout(retryTimer);
+        }
 
         const unprocessed = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
         if (unprocessed.length > 0 && processed === 0) {
@@ -527,7 +573,9 @@
             if (retryCount >= 3) {
                 retryCount = 0;
                 freshDataCache = null;
-                if (from) console.log("[HH-EXT] превышен лимит retry, пробуем fetch");
+                if (from) {
+                    console.log("[HH-EXT] превышен лимит retry, пробуем fetch");
+                }
                 fetchPageData()
                     .then((freshData) => {
                         if (freshData) {
@@ -543,7 +591,9 @@
                     });
                 return;
             }
-            if (from) console.log("[HH-EXT]  retry через 1с (unprocessed=" + unprocessed.length + ")");
+            if (from) {
+                console.log("[HH-EXT]  retry через 1с (unprocessed=" + unprocessed.length + ")");
+            }
             retryTimer = setTimeout(() => processPage("retry"), 1000);
         } else if (processed > 0 || unprocessed.length === 0) {
             retryCount = 0;
@@ -578,7 +628,9 @@
     function initObserver() {
         let timer = null;
         const obs = new MutationObserver(() => {
-            if (timer) clearTimeout(timer);
+            if (timer) {
+                clearTimeout(timer);
+            }
             timer = setTimeout(() => {
                 const fresh = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
                 if (fresh.length > 0) {

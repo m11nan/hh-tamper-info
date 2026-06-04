@@ -21,6 +21,7 @@ export default [
             "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
             "no-undef": "error",
             "no-redeclare": "error",
+            curly: ["error", "all"],
             "no-extra-semi": "warn",
             "no-trailing-spaces": "warn",
             "eol-last": ["warn", "always"],
