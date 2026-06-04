@@ -408,20 +408,19 @@
 
     /* ====================== MAIN ====================== */
 
-    let pageDataCache = null;
+    let retryTimer = null;
 
     function processPage() {
-        if (!pageDataCache) {
-            pageDataCache = extractPageData();
-        }
-        if (!pageDataCache) return;
+        const pageData = extractPageData();
+        if (!pageData) return;
 
-        const vacancies = pageDataCache.vacancySearchResult?.vacancies;
+        const vacancies = pageData.vacancySearchResult?.vacancies;
         if (!vacancies?.length) return;
 
         const map = new Map(vacancies.map((v) => [String(v.vacancyId), v]));
         const cards = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"], [data-qa="serp-item"]');
 
+        let processed = 0;
         for (const card of cards) {
             if (card.classList.contains("hh-ext-done")) continue;
 
@@ -436,6 +435,15 @@
 
             injectInfo(card, data);
             card.classList.add("hh-ext-done");
+            processed++;
+        }
+
+        // Если есть необработанные карточки, но данные по ним не найдены —
+        // возможно, AJAX ещё не доставил JSON. Пробуем ещё раз через секунду.
+        const unprocessed = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
+        if (unprocessed.length > 0 && processed === 0 && processed !== cards.length) {
+            if (retryTimer) clearTimeout(retryTimer);
+            retryTimer = setTimeout(processPage, 1000);
         }
     }
 
