@@ -342,7 +342,10 @@
         );
 
         if (pubInfo.isSuspicious) {
-            r1.insertAdjacentHTML("beforeend", '<span class="hh-ext-badge" style="background:#fff7ed;color:#c2410c;border-color:#ffedd5">⚠ Опасно</span>');
+            r1.insertAdjacentHTML(
+                "beforeend",
+                '<span class="hh-ext-badge" style="background:#fff7ed;color:#c2410c;border-color:#ffedd5">⚠ Опасно</span>',
+            );
         }
 
         if (comp.gross === true) {
