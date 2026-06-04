@@ -438,20 +438,44 @@
             processed++;
         }
 
-        // Если есть необработанные карточки, но данные по ним не найдены —
-        // возможно, AJAX ещё не доставил JSON. Пробуем ещё раз через секунду.
+        // Если есть необработанные карточки — возможно, JSON ещё не обновился.
+        // Пробуем ещё раз через секунду.
         const unprocessed = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
-        if (unprocessed.length > 0 && processed === 0 && processed !== cards.length) {
+        if (unprocessed.length > 0 && processed === 0) {
             if (retryTimer) clearTimeout(retryTimer);
             retryTimer = setTimeout(processPage, 1000);
         }
+    }
+
+    function resetAndReprocess() {
+        document.querySelectorAll(".hh-ext-done").forEach((el) => el.classList.remove("hh-ext-done"));
+        processPage();
+    }
+
+    function patchHistory() {
+        const wrap = (original) =>
+            function (...args) {
+                const rv = original.apply(this, args);
+                setTimeout(resetAndReprocess, 400);
+                return rv;
+            };
+        history.pushState = wrap(history.pushState);
+        history.replaceState = wrap(history.replaceState);
+        window.addEventListener("popstate", () => setTimeout(resetAndReprocess, 400));
     }
 
     function initObserver() {
         let timer = null;
         const obs = new MutationObserver(() => {
             if (timer) clearTimeout(timer);
-            timer = setTimeout(processPage, 150);
+            timer = setTimeout(() => {
+                // Если React переиспользовал DOM-узлы — мутаций не будет.
+                // Проверяем, не изменились ли данные, по наличию необработанных карточек.
+                const fresh = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
+                if (fresh.length > 0) {
+                    processPage();
+                }
+            }, 150);
         });
         obs.observe(document.body, { childList: true, subtree: true });
     }
@@ -460,9 +484,11 @@
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(processPage, 200);
             initObserver();
+            patchHistory();
         });
     } else {
         setTimeout(processPage, 200);
         initObserver();
+        patchHistory();
     }
 })();

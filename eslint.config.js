@@ -11,6 +11,7 @@ export default [
                 JSON: "readonly",
                 console: "readonly",
                 window: "readonly",
+                history: "readonly",
             },
         },
         rules: {
