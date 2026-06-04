@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         HH.ru Расширенная информация о вакансии (Modern)
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Добавляет скрытые данные (тип публикации, отклики, ТК РФ, даты) на обновленные карточки вакансий HH.ru
 // @author       You
 // @match        https://*.hh.ru/search/vacancy*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=hh.ru
-// @updateURL    https://raw.githubusercontent.com/m11nan/hh-tamper-info/main/hh-hidden-info.user.js
-// @downloadURL  https://raw.githubusercontent.com/m11nan/hh-tamper-info/main/hh-hidden-info.user.js
+// @updateURL    https://raw.githubusercontent.com/m11nan/hh-tamper-info/tested/hh-hidden-info.user.js
+// @downloadURL  https://raw.githubusercontent.com/m11nan/hh-tamper-info/tested/hh-hidden-info.user.js
 // @grant        GM_addStyle
 // @run-at       document-idle
 // ==/UserScript==
@@ -324,9 +324,7 @@
         // Визуальные маркеры карточки
         const isFresh = creDate && new Date(creDate).toDateString() === new Date().toDateString();
         const isFraud = pubInfo.isSuspicious;
-        if (isFresh || isFraud) {
-            console.log("[HH-EXT] marker check:", { vacancyId: data.vacancyId, creDate, isFresh, isFraud, pubInfo });
-        }
+        console.log("[HH-EXT] marker check", data.vacancyId, { creDate, isFresh, isFraud });
         if (isFresh) card.classList.add("hh-ext-card--fresh");
         if (isFraud) card.classList.add("hh-ext-card--fraud");
 
