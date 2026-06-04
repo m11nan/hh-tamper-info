@@ -411,58 +411,89 @@
 
     let retryTimer = null;
 
-    function processPage() {
+    function processPage(from) {
         const pageData = extractPageData();
-        if (!pageData) return;
+        if (!pageData) {
+            if (from) console.log("[HH-EXT] processPage(" + from + "): extract вернул null");
+            return;
+        }
 
         const vacancies = pageData.vacancySearchResult?.vacancies;
-        if (!vacancies?.length) return;
+        if (!vacancies?.length) {
+            if (from) console.log("[HH-EXT] processPage(" + from + "): нет вакансий в данных");
+            return;
+        }
 
         const map = new Map(vacancies.map((v) => [String(v.vacancyId), v]));
         const cards = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"], [data-qa="serp-item"]');
+
+        if (from)
+            console.log(
+                "[HH-EXT] processPage(" +
+                    from +
+                    "): карточек=" +
+                    cards.length +
+                    ", вакансий в JSON=" +
+                    vacancies.length,
+            );
 
         let processed = 0;
         for (const card of cards) {
             if (card.classList.contains("hh-ext-done")) continue;
 
             const link = card.querySelector('[data-qa="serp-item__title"], [data-qa="vacancy-serp__vacancy-title"]');
-            if (!link) continue;
+            if (!link) {
+                if (from) console.log("[HH-EXT]  нет ссылки в карточке");
+                continue;
+            }
 
             const m = (link.href || "").match(/vacancy\/(\d+)/);
-            if (!m) continue;
+            if (!m) {
+                if (from) console.log("[HH-EXT]  нет ID в href:", link.href);
+                continue;
+            }
 
             const data = map.get(m[1]);
-            if (!data) continue;
+            if (!data) {
+                if (from) console.log("[HH-EXT]  ID " + m[1] + " не найден в JSON");
+                continue;
+            }
 
             injectInfo(card, data);
             card.classList.add("hh-ext-done");
             processed++;
         }
 
-        // Если есть необработанные карточки — возможно, JSON ещё не обновился.
-        // Пробуем ещё раз через секунду.
+        if (from) console.log("[HH-EXT] processPage(" + from + "): обработано=" + processed);
+
         const unprocessed = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
         if (unprocessed.length > 0 && processed === 0) {
+            if (from) console.log("[HH-EXT]  retry через 1с (unprocessed=" + unprocessed.length + ")");
             if (retryTimer) clearTimeout(retryTimer);
-            retryTimer = setTimeout(processPage, 1000);
+            retryTimer = setTimeout(() => processPage("retry"), 1000);
         }
     }
 
-    function resetAndReprocess() {
+    function resetAndReprocess(from) {
+        console.log("[HH-EXT] resetAndReprocess от " + from);
         document.querySelectorAll(".hh-ext-done").forEach((el) => el.classList.remove("hh-ext-done"));
-        processPage();
+        processPage("reset:" + from);
     }
 
     function patchHistory() {
-        const wrap = (original) =>
+        const wrap = (original, label) =>
             function (...args) {
+                console.log("[HH-EXT] history." + label + " intercepted");
                 const rv = original.apply(this, args);
-                setTimeout(resetAndReprocess, 400);
+                setTimeout(() => resetAndReprocess("history." + label), 400);
                 return rv;
             };
-        history.pushState = wrap(history.pushState);
-        history.replaceState = wrap(history.replaceState);
-        window.addEventListener("popstate", () => setTimeout(resetAndReprocess, 400));
+        history.pushState = wrap(history.pushState, "pushState");
+        history.replaceState = wrap(history.replaceState, "replaceState");
+        window.addEventListener("popstate", () => {
+            console.log("[HH-EXT] popstate intercepted");
+            setTimeout(() => resetAndReprocess("popstate"), 400);
+        });
     }
 
     function initObserver() {
@@ -470,11 +501,10 @@
         const obs = new MutationObserver(() => {
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
-                // Если React переиспользовал DOM-узлы — мутаций не будет.
-                // Проверяем, не изменились ли данные, по наличию необработанных карточек.
                 const fresh = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
                 if (fresh.length > 0) {
-                    processPage();
+                    console.log("[HH-EXT] observer: fresh=" + fresh.length);
+                    processPage("observer");
                 }
             }, 150);
         });
@@ -486,19 +516,25 @@
         // Поэтому периодически проверяем наличие необработанных карточек.
         setInterval(() => {
             const fresh = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
-            if (fresh.length > 0) processPage();
+            if (fresh.length > 0) {
+                console.log("[HH-EXT] poller: fresh=" + fresh.length);
+                processPage("poller");
+            }
         }, POLL_INTERVAL);
     }
 
+    console.log("[HH-EXT] скрипт загружен");
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => {
-            setTimeout(processPage, 200);
+            console.log("[HH-EXT] DOMContentLoaded");
+            setTimeout(() => processPage("init"), 200);
             initObserver();
             patchHistory();
             initPoller();
         });
     } else {
-        setTimeout(processPage, 200);
+        console.log("[HH-EXT] readyState=" + document.readyState);
+        setTimeout(() => processPage("init"), 200);
         initObserver();
         patchHistory();
         initPoller();
