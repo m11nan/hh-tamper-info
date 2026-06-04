@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HH.ru Расширенная информация о вакансии (Modern)
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Добавляет скрытые данные (тип публикации, отклики, ТК РФ, даты) на обновленные карточки вакансий HH.ru
 // @author       You
 // @match        https://*.hh.ru/search/vacancy*
@@ -206,6 +206,22 @@
         return -1;
     }
 
+    async function fetchPageData() {
+        try {
+            const resp = await fetch(window.location.href, { headers: { Accept: "text/html" } });
+            const html = await resp.text();
+            const marker = '{"redirectConfig"';
+            const idx = html.indexOf(marker);
+            if (idx === -1) return null;
+            const end = findMatchingBrace(html, idx);
+            if (end === -1) return null;
+            return JSON.parse(html.slice(idx, end + 1));
+        } catch (e) {
+            console.log("[HH-EXT] fetch error:", e);
+            return null;
+        }
+    }
+
     /* ====================== HELPERS ====================== */
 
     function getPubInfo(data) {
@@ -271,6 +287,7 @@
     /* ====================== INJECTION ====================== */
 
     function injectInfo(card, data) {
+        if (card.querySelector(".hh-ext-wrap")) return;
         const company = data.company || {};
         const comp = data.compensation || {};
         const resp = data.autoResponse || {};
@@ -410,9 +427,11 @@
     /* ====================== MAIN ====================== */
 
     let retryTimer = null;
+    let retryCount = 0;
+    let freshDataCache = null;
 
     function processPage(from) {
-        const pageData = extractPageData();
+        const pageData = freshDataCache || extractPageData();
         if (!pageData) {
             if (from) console.log("[HH-EXT] processPage(" + from + "): extract вернул null");
             return;
@@ -466,16 +485,42 @@
 
         if (from) console.log("[HH-EXT] processPage(" + from + "): обработано=" + processed);
 
+        if (retryTimer) clearTimeout(retryTimer);
+
         const unprocessed = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
         if (unprocessed.length > 0 && processed === 0) {
+            retryCount++;
+            if (retryCount >= 3) {
+                retryCount = 0;
+                freshDataCache = null;
+                if (from) console.log("[HH-EXT] превышен лимит retry, пробуем fetch");
+                fetchPageData()
+                    .then((freshData) => {
+                        if (freshData) {
+                            console.log("[HH-EXT] получены свежие данные с сервера");
+                            freshDataCache = freshData;
+                            processPage("fetch");
+                        } else {
+                            retryTimer = setTimeout(() => processPage("retry"), 1000);
+                        }
+                    })
+                    .catch(() => {
+                        retryTimer = setTimeout(() => processPage("retry"), 1000);
+                    });
+                return;
+            }
             if (from) console.log("[HH-EXT]  retry через 1с (unprocessed=" + unprocessed.length + ")");
-            if (retryTimer) clearTimeout(retryTimer);
             retryTimer = setTimeout(() => processPage("retry"), 1000);
+        } else if (processed > 0 || unprocessed.length === 0) {
+            retryCount = 0;
+            freshDataCache = null;
         }
     }
 
     function resetAndReprocess(from) {
         console.log("[HH-EXT] resetAndReprocess от " + from);
+        freshDataCache = null;
+        retryCount = 0;
         document.querySelectorAll(".hh-ext-done").forEach((el) => el.classList.remove("hh-ext-done"));
         processPage("reset:" + from);
     }

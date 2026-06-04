@@ -10,6 +10,7 @@ export default [
                 clearInterval: "readonly",
                 MutationObserver: "readonly",
                 GM_addStyle: "readonly",
+                fetch: "readonly",
                 JSON: "readonly",
                 console: "readonly",
                 window: "readonly",
