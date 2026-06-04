@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HH.ru Расширенная информация о вакансии (Modern)
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Добавляет скрытые данные (тип публикации, отклики, ТК РФ, даты) на обновленные карточки вакансий HH.ru
 // @author       You
 // @match        https://*.hh.ru/search/vacancy*
@@ -298,6 +298,12 @@
         const creDate = data.creationTime || "";
         const gph = getGPH(data.civilLawContracts);
 
+        // Визуальные маркеры карточки
+        const isFresh = creDate && new Date(creDate).toDateString() === new Date().toDateString();
+        const isFraud = pubInfo.isSuspicious;
+        if (isFresh) card.style.background = "#f0fdfa";      // пастельный зелёный
+        if (isFraud) card.style.background = "#fff7ed";       // пастельный оранжевый
+
         const wrap = document.createElement("div");
         wrap.className = "hh-ext-wrap";
 
@@ -312,7 +318,7 @@
         );
 
         if (pubInfo.isSuspicious) {
-            r1.insertAdjacentHTML("beforeend", '<span class="hh-ext-tag hh-ext-tag--red">⚠ Подозрительная</span>');
+            r1.insertAdjacentHTML("beforeend", '<span class="hh-ext-badge" style="background:#fff7ed;color:#c2410c;border-color:#ffedd5">⚠ Опасно</span>');
         }
 
         if (comp.gross === true) {
