@@ -322,7 +322,7 @@
         const gph = getGPH(data.civilLawContracts);
 
         // Визуальные маркеры карточки
-        const isFresh = creDate && new Date(creDate).toDateString() === new Date().toDateString();
+        const isFresh = creDate && Date.now() - new Date(creDate).getTime() < 24 * 60 * 60 * 1000;
         const isFraud = pubInfo.isSuspicious;
         console.log("[HH-EXT] marker check", data.vacancyId, { creDate, isFresh, isFraud });
         if (isFresh) card.classList.add("hh-ext-card--fresh");
