@@ -152,16 +152,27 @@
 
         .hh-ext-spacer { flex: 1; }
 
-        /* Card background markers */
-        .hh-ext-card--fresh,
-        .hh-ext-card--fresh .magritte-card___bhGKz_8-5-13,
-        .hh-ext-card--fresh [class*="magritte-card"] {
-            background: #f0fdfa !important;
+        /* Card background markers via pseudo-element on the card */
+        [data-qa="vacancy-serp__vacancy"] {
+            position: relative;
         }
-        .hh-ext-card--fraud,
-        .hh-ext-card--fraud .magritte-card___bhGKz_8-5-13,
-        .hh-ext-card--fraud [class*="magritte-card"] {
-            background: #fff7ed !important;
+        [data-qa="vacancy-serp__vacancy"].hh-ext-card--fresh::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: #f0fdfa;
+            border-radius: inherit;
+            z-index: -1;
+            pointer-events: none;
+        }
+        [data-qa="vacancy-serp__vacancy"].hh-ext-card--fraud::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: #fff7ed;
+            border-radius: inherit;
+            z-index: -1;
+            pointer-events: none;
         }
     `);
 
