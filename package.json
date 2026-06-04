@@ -1,0 +1,18 @@
+{
+  "name": "hh-tamper-info",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tampermonkey userscript — скрытая информация о вакансиях HH.ru",
+  "scripts": {
+    "format": "prettier --write hh-hidden-info.user.js",
+    "format:check": "prettier --check hh-hidden-info.user.js",
+    "lint": "eslint hh-hidden-info.user.js",
+    "lint:fix": "eslint --fix hh-hidden-info.user.js",
+    "check": "npm run format:check && npm run lint"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  }
+}
