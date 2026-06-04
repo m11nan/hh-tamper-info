@@ -6,6 +6,8 @@ export default [
                 document: "readonly",
                 setTimeout: "readonly",
                 clearTimeout: "readonly",
+                setInterval: "readonly",
+                clearInterval: "readonly",
                 MutationObserver: "readonly",
                 GM_addStyle: "readonly",
                 JSON: "readonly",

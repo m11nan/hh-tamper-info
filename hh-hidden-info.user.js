@@ -57,6 +57,7 @@
     };
 
     const MONTHS_RU = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+    const POLL_INTERVAL = 2000; // мс — fallback опроса для History API
 
     /* ====================== STYLES ====================== */
 
@@ -480,15 +481,26 @@
         obs.observe(document.body, { childList: true, subtree: true });
     }
 
+    function initPoller() {
+        // Fallback: React Router может вызывать оригинал pushState в обход нашей подмены.
+        // Поэтому периодически проверяем наличие необработанных карточек.
+        setInterval(() => {
+            const fresh = document.querySelectorAll('[data-qa="vacancy-serp__vacancy"]:not(.hh-ext-done)');
+            if (fresh.length > 0) processPage();
+        }, POLL_INTERVAL);
+    }
+
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(processPage, 200);
             initObserver();
             patchHistory();
+            initPoller();
         });
     } else {
         setTimeout(processPage, 200);
         initObserver();
         patchHistory();
+        initPoller();
     }
 })();
